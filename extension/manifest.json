@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Forex Assistant Overlay",
+  "version": "1.0",
+  "description": "Injects local Forex Assistant dashboard into TradingView charts.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "*://*.tradingview.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.tradingview.com/chart/*"],
+      "js": ["content.js"],
+      "css": ["style.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["style.css"],
+      "matches": ["*://*.tradingview.com/*"]
+    }
+  ]
+}

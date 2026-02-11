@@ -1,0 +1,72 @@
+﻿
+==============================================================
+  [DEMO] DEMO MODE - Synthetic Data (3 Candle Closes)
+==============================================================
+
+--------------------------------------------------------------
+  [#1] CANDLE CLOSE  |  Session: London  |  Time: 02:00 PM PKT
+--------------------------------------------------------------
+python : Traceback 
+(most recent call 
+last):
+At line:1 char:22
++ ... ONUTF8='1'; 
+python -c "import 
+traceback; exec(ope
+n('main.py').read()
+) ...
++                 ~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo 
+             : No  
+  tSpecified: (T   
+ raceback (most    
+ recent call l    
+ast)::String)     
+[], RemoteExce    
+ption
+    + FullyQualifi 
+   edErrorId : Na  
+  tiveCommandErr   
+ or
+ 
+  File "<string>", 
+line 1, in <module>
+  File "<string>", 
+line 297, in 
+<module>
+  File "<string>", 
+line 291, in main
+  File "<string>", 
+line 176, in 
+run_demo
+  File "<string>", 
+line 79, in 
+analyze_pair
+  File "C:\Users\sa
+ad\Desktop\trade\sc
+oring.py", line 
+579, in 
+compute_total_score
+    eq   = score_en
+try_quality(df_15m,
+ regime)
+           ^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+^^^^^^^^
+  File "C:\Users\sa
+ad\Desktop\trade\sc
+oring.py", line 
+294, in 
+score_entry_quality
+    details["reject
+ion"] = f"{rej:+d}"
+                   
+        ^^^^^^^^^^^
+ValueError: 
+Unknown format 
+code 'd' for 
+object of type 
+'float'

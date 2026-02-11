@@ -1,0 +1,97 @@
+﻿{
+    "eligibility":  {
+                        "block_reasons":  [
+                                              "SCORE_TOO_LOW",
+                                              "LOW_DOMINANCE"
+                                          ],
+                        "direction":  "None",
+                        "is_eligible":  false
+                    },
+    "pair":  "XAUUSD",
+    "regime":  {
+                   "confidence":  0.85,
+                   "direction":  "bullish",
+                   "type":  "Trend"
+               },
+    "scores":  {
+                   "breakdown":  {
+                                     "daily_bias":  {
+                                                        "details":  {
+                                                                        "adx":  "12.2 (+DI=19.2, -DI=23.2)",
+                                                                        "breakout_proximity":  "0.174",
+                                                                        "ema50_slope":  "+0.087%",
+                                                                        "label":  "Bearish",
+                                                                        "price_vs_ema200":  "Above (+0.90%)"
+                                                                    },
+                                                        "long":  12.4,
+                                                        "max":  25,
+                                                        "short":  12.6
+                                                    },
+                                     "entry_quality":  {
+                                                           "details":  {
+                                                                           "pullback_long":  "0.021",
+                                                                           "pullback_short":  "0.979",
+                                                                           "rejection":  "+0",
+                                                                           "rsi":  "79.2",
+                                                                           "volume_ratio":  "0.94"
+                                                                       },
+                                                           "long":  6.8,
+                                                           "max":  30,
+                                                           "short":  6.8
+                                                       },
+                                     "regime_alignment":  {
+                                                              "details":  {
+                                                                              "adx":  "33.3",
+                                                                              "ma_aligned":  "True",
+                                                                              "regime":  "Trend (bullish, conf=0.85)"
+                                                                          },
+                                                              "long":  17.0,
+                                                              "max":  20,
+                                                              "short":  4.2
+                                                          },
+                                     "risk_quality":  {
+                                                          "details":  {
+                                                                          "atr_multiplier":  "1.5x",
+                                                                          "long_rr":  "0.16",
+                                                                          "risk_dollar":  "$0.75",
+                                                                          "risk_pct":  "0.75%",
+                                                                          "short_rr":  "6.89",
+                                                                          "stop_dist":  "10.02240"
+                                                                      },
+                                                          "long":  6.0,
+                                                          "max":  10,
+                                                          "short":  10.0
+                                                      },
+                                     "volatility_session":  {
+                                                                "details":  {
+                                                                                "session":  "London (+3)",
+                                                                                "spread_quality":  "HL/ATR=0.29",
+                                                                                "vol_percentile":  "42.0 (5pts)"
+                                                                            },
+                                                                "long":  10.0,
+                                                                "max":  15,
+                                                                "short":  10.0
+                                                            }
+                                 },
+                   "dominance_spread":  8.6,
+                   "dominant_side":  "Long",
+                   "long_total":  52.2,
+                   "short_total":  43.6
+               },
+    "session":  {
+                    "is_tradeable":  true,
+                    "name":  "London",
+                    "score_bonus":  3,
+                    "time":  "01:22 PM"
+                },
+    "trade_setup":  {
+                        "direction":  "None",
+                        "entry":  2636.51857,
+                        "lot_size":  0.01,
+                        "risk_amount":  0.75,
+                        "risk_pct":  0.75,
+                        "risk_reward":  1.5,
+                        "stop":  2626.49617,
+                        "target":  2651.55216
+                    }
+}

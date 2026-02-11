@@ -1,0 +1,132 @@
+/* Floating Dashboard Panel */
+#fx-assistant-panel {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    width: 380px;
+    background: rgba(19, 23, 34, 0.95); /* TradingView dark bg */
+    border: 1px solid #434651;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 9999;
+    color: #d1d4dc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+    font-size: 13px;
+    padding: 0;
+    backdrop-filter: blur(5px);
+}
+
+/* Header */
+#fx-header {
+    background: #2a2e39;
+    padding: 10px 15px;
+    border-bottom: 1px solid #434651;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+#fx-title {
+    font-weight: 700;
+    color: #2962ff; /* TradingView Blue */
+    text-transform: uppercase;
+}
+
+#fx-close {
+    cursor: pointer;
+    font-size: 16px;
+    color: #787b86;
+}
+#fx-close:hover { color: #fff; }
+
+/* Content */
+#fx-content {
+    padding: 15px;
+}
+
+/* Rows */
+.fx-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.fx-label {
+    color: #787b86;
+}
+
+.fx-value {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Score Bars */
+.score-container {
+    margin: 12px 0;
+}
+.score-bar-bg {
+    height: 8px;
+    background: #2a2e39;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.score-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+.score-long { background: #00bcd4; } /* Cyan */
+.score-short { background: #ff5252; } /* Red */
+
+/* Status Box */
+#fx-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.status-eligible {
+    background: rgba(0, 188, 212, 0.2);
+    color: #00bcd4;
+    border: 1px solid #00bcd4;
+}
+.status-blocked {
+    background: rgba(255, 82, 82, 0.2);
+    color: #ff5252;
+    border: 1px solid #ff5252;
+}
+
+/* Refresh Button */
+#fx-refresh {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: #2962ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+#fx-refresh:hover { background: #1e53e5; }
+#fx-refresh:disabled { background: #434651; cursor: wait; }
+
+/* Spinner */
+.fx-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 5px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
