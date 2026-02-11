@@ -103,3 +103,51 @@ TIMEFRAME_15M   = "15m"
 FETCH_PERIOD_DAILY = "120d"   # ~6 months for 200 EMA
 FETCH_PERIOD_1H    = "30d"    # yfinance limit for hourly
 FETCH_PERIOD_15M   = "7d"     # yfinance limit for 15m
+
+# ═══════════════════════════════════════════════════════════════
+#  NEW: World-Class Feature Parameters
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────── Pair Correlations ────────────────────
+# Correlation matrix for risk management (avoid overexposure)
+PAIR_CORRELATIONS = {
+    ("XAUUSD", "XAGUSD"): 0.85,  # Gold and Silver highly correlated
+    ("EURUSD", "GBPUSD"): 0.75,  # EUR and GBP moderately correlated
+    ("EURUSD", "USDCHF"): -0.80, # EUR/USD and USD/CHF inversely correlated
+}
+CORRELATION_THRESHOLD = 0.7  # Block if correlation > 0.7
+
+# ─────────────────────────── Time-of-Day Patterns ──────────────────
+# Optimal trading hours per pair (PKT timezone)
+OPTIMAL_HOURS = {
+    "XAUUSD": [(18, 21)],  # 6-9 PM PKT (NY open)
+    "EURUSD": [(12, 15)],  # 12-3 PM PKT (London open)
+    "GBPUSD": [(12, 15)],  # 12-3 PM PKT (London open)
+    "XAGUSD": [(18, 21)],  # 6-9 PM PKT (NY open)
+}
+
+# ─────────────────────────── Adaptive ATR Multipliers ──────────────
+# Volatility-based stop sizing
+ATR_MULTIPLIERS = {
+    "low": 1.2,      # vol_percentile < 30
+    "normal": 1.5,   # vol_percentile 30-70
+    "high": 2.0,     # vol_percentile > 70
+}
+
+# ─────────────────────────── Liquidity Zones ───────────────────────
+LIQUIDITY_ZONE_LOOKBACK = 50
+LIQUIDITY_ZONE_COUNT = 3
+LIQUIDITY_ZONE_TOLERANCE = 0.3  # % tolerance for clustering
+
+# ─────────────────────────── Position Scaling ──────────────────────
+# Score-based position sizing
+POSITION_SCALE = {
+    (65, 75): 0.5,   # 50% position
+    (75, 85): 0.75,  # 75% position
+    (85, 100): 1.0,  # 100% position
+}
+
+# ─────────────────────────── News Event Filter ─────────────────────
+NEWS_BLOCK_MINUTES_BEFORE = 30
+NEWS_BLOCK_MINUTES_AFTER = 30
+NEWS_IMPACT_LEVELS = ["high"]  # Block only high-impact news

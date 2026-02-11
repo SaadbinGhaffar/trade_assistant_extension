@@ -284,3 +284,291 @@ def compute_all_features(df: pd.DataFrame) -> pd.DataFrame:
     df["rejection"]    = is_rejection_candle(df)
     df["reversal"]     = is_reversal_candle(df)
     return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  Market Structure Detection
+# ═══════════════════════════════════════════════════════════════
+
+def detect_market_structure(df: pd.DataFrame, lookback: int = 10) -> pd.DataFrame:
+    """
+    Detect market structure: swing highs/lows and structure breaks.
+    
+    Returns DataFrame with columns:
+    - swing_high: 1 if swing high, 0 otherwise
+    - swing_low: 1 if swing low, 0 otherwise
+    - structure: 'bullish', 'bearish', or 'neutral'
+    - structure_break: 1 if BOS (break of structure), 0 otherwise
+    """
+    df["swing_high"] = 0
+    df["swing_low"] = 0
+    
+    # Identify swing points
+    for i in range(lookback, len(df) - lookback):
+        # Swing high: highest high in window
+        if df["High"].iloc[i] == df["High"].iloc[i-lookback:i+lookback+1].max():
+            df.loc[df.index[i], "swing_high"] = 1
+        
+        # Swing low: lowest low in window
+        if df["Low"].iloc[i] == df["Low"].iloc[i-lookback:i+lookback+1].min():
+            df.loc[df.index[i], "swing_low"] = 1
+    
+    # Determine market structure
+    structure = []
+    structure_break = []
+    
+    swing_highs = df[df["swing_high"] == 1]["High"].values
+    swing_lows = df[df["swing_low"] == 1]["Low"].values
+    
+    for i in range(len(df)):
+        if i < lookback * 2:
+            structure.append("neutral")
+            structure_break.append(0)
+            continue
+        
+        # Get recent swings
+        recent_highs = swing_highs[-3:] if len(swing_highs) >= 3 else swing_highs
+        recent_lows = swing_lows[-3:] if len(swing_lows) >= 3 else swing_lows
+        
+        # Higher highs and higher lows = bullish
+        if len(recent_highs) >= 2 and len(recent_lows) >= 2:
+            hh = all(recent_highs[j] < recent_highs[j+1] for j in range(len(recent_highs)-1))
+            hl = all(recent_lows[j] < recent_lows[j+1] for j in range(len(recent_lows)-1))
+            
+            # Lower highs and lower lows = bearish
+            lh = all(recent_highs[j] > recent_highs[j+1] for j in range(len(recent_highs)-1))
+            ll = all(recent_lows[j] > recent_lows[j+1] for j in range(len(recent_lows)-1))
+            
+            if hh and hl:
+                current_structure = "bullish"
+            elif lh and ll:
+                current_structure = "bearish"
+            else:
+                current_structure = "neutral"
+        else:
+            current_structure = "neutral"
+        
+        # Detect structure break
+        prev_structure = structure[-1] if structure else "neutral"
+        is_break = 1 if current_structure != prev_structure and current_structure != "neutral" else 0
+        
+        structure.append(current_structure)
+        structure_break.append(is_break)
+    
+    df["market_structure"] = structure
+    df["structure_break"] = structure_break
+    
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  VWAP (Volume-Weighted Average Price)
+# ═══════════════════════════════════════════════════════════════
+
+def add_vwap(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate VWAP and standard deviation bands.
+    
+    VWAP = Cumulative(Price × Volume) / Cumulative(Volume)
+    """
+    typical_price = (df["High"] + df["Low"] + df["Close"]) / 3
+    
+    df["vwap"] = (typical_price * df["Volume"]).cumsum() / df["Volume"].cumsum()
+    
+    # Calculate VWAP standard deviation bands
+    df["vwap_diff"] = typical_price - df["vwap"]
+    df["vwap_std"] = df["vwap_diff"].rolling(20).std()
+    df["vwap_upper"] = df["vwap"] + 2 * df["vwap_std"]
+    df["vwap_lower"] = df["vwap"] - 2 * df["vwap_std"]
+    
+    # Position relative to VWAP (-1 to 1)
+    df["vwap_position"] = (df["Close"] - df["vwap"]) / df["vwap_std"].replace(0, np.nan)
+    df["vwap_position"] = df["vwap_position"].fillna(0).clip(-3, 3) / 3
+    
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  Liquidity Zones (Volume-Weighted Support/Resistance)
+# ═══════════════════════════════════════════════════════════════
+
+def detect_liquidity_zones(
+    df: pd.DataFrame,
+    lookback: int = 50,
+    num_zones: int = 3,
+    tolerance_pct: float = 0.3,
+) -> dict:
+    """
+    Detect key liquidity zones using volume-weighted swing points.
+    
+    Returns dict with:
+        "support": list of support levels
+        "resistance": list of resistance levels
+        "strength": dict mapping level to strength score
+    """
+    if len(df) < lookback:
+        return {"support": [], "resistance": [], "strength": {}}
+    
+    # Identify volume-weighted swing points
+    swing_highs = []
+    swing_lows = []
+    
+    for i in range(lookback, len(df) - 5):
+        window_high = df["High"].iloc[i-lookback:i+5]
+        window_low = df["Low"].iloc[i-lookback:i+5]
+        
+        if df["High"].iloc[i] == window_high.max():
+            volume_weight = df["Volume"].iloc[i] / df["Volume"].iloc[i-lookback:i+5].mean()
+            swing_highs.append({
+                "price": df["High"].iloc[i],
+                "volume": volume_weight,
+                "index": i,
+            })
+        
+        if df["Low"].iloc[i] == window_low.min():
+            volume_weight = df["Volume"].iloc[i] / df["Volume"].iloc[i-lookback:i+5].mean()
+            swing_lows.append({
+                "price": df["Low"].iloc[i],
+                "volume": volume_weight,
+                "index": i,
+            })
+    
+    # Cluster nearby levels
+    def cluster_zones(zones, tolerance_pct):
+        if not zones:
+            return []
+        
+        zones = sorted(zones, key=lambda x: x["price"])
+        clustered = []
+        current_cluster = [zones[0]]
+        
+        for zone in zones[1:]:
+            cluster_avg = np.average(
+                [z["price"] for z in current_cluster],
+                weights=[z["volume"] for z in current_cluster]
+            )
+            tolerance = cluster_avg * (tolerance_pct / 100)
+            
+            if abs(zone["price"] - cluster_avg) <= tolerance:
+                current_cluster.append(zone)
+            else:
+                # Finalize cluster
+                avg_price = np.average(
+                    [z["price"] for z in current_cluster],
+                    weights=[z["volume"] for z in current_cluster]
+                )
+                strength = sum(z["volume"] for z in current_cluster) * len(current_cluster)
+                recency = max(z["index"] for z in current_cluster) / len(df)
+                
+                clustered.append({
+                    "price": avg_price,
+                    "strength": strength * (0.5 + recency * 0.5),
+                    "touches": len(current_cluster),
+                })
+                current_cluster = [zone]
+        
+        # Add final cluster
+        if current_cluster:
+            avg_price = np.average(
+                [z["price"] for z in current_cluster],
+                weights=[z["volume"] for z in current_cluster]
+            )
+            strength = sum(z["volume"] for z in current_cluster) * len(current_cluster)
+            recency = max(z["index"] for z in current_cluster) / len(df)
+            
+            clustered.append({
+                "price": avg_price,
+                "strength": strength * (0.5 + recency * 0.5),
+                "touches": len(current_cluster),
+            })
+        
+        return clustered
+    
+    resistance_zones = cluster_zones(swing_highs, tolerance_pct)
+    support_zones = cluster_zones(swing_lows, tolerance_pct)
+    
+    # Sort by strength and take top N
+    resistance_zones = sorted(resistance_zones, key=lambda x: x["strength"], reverse=True)[:num_zones]
+    support_zones = sorted(support_zones, key=lambda x: x["strength"], reverse=True)[:num_zones]
+    
+    # Extract prices
+    resistance_prices = sorted([z["price"] for z in resistance_zones], reverse=True)
+    support_prices = sorted([z["price"] for z in support_zones])
+    
+    # Build strength map
+    strength = {}
+    for z in resistance_zones:
+        strength[z["price"]] = z["strength"]
+    for z in support_zones:
+        strength[z["price"]] = z["strength"]
+    
+    return {
+        "support": support_prices,
+        "resistance": resistance_prices,
+        "strength": strength,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+#  Momentum Oscillators
+# ═══════════════════════════════════════════════════════════════
+
+def add_stochastic(df: pd.DataFrame, k_period: int = 14, d_period: int = 3) -> pd.DataFrame:
+    """Add Stochastic Oscillator (%K and %D)."""
+    low_min = df["Low"].rolling(k_period).min()
+    high_max = df["High"].rolling(k_period).max()
+    
+    df["stoch_k"] = 100 * (df["Close"] - low_min) / (high_max - low_min).replace(0, np.nan)
+    df["stoch_d"] = df["stoch_k"].rolling(d_period).mean()
+    df["stoch_k"] = df["stoch_k"].fillna(50)
+    df["stoch_d"] = df["stoch_d"].fillna(50)
+    
+    return df
+
+
+def add_macd(df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """Add MACD (Moving Average Convergence Divergence)."""
+    ema_fast = df["Close"].ewm(span=fast, adjust=False).mean()
+    ema_slow = df["Close"].ewm(span=slow, adjust=False).mean()
+    
+    df["macd"] = ema_fast - ema_slow
+    df["macd_signal"] = df["macd"].ewm(span=signal, adjust=False).mean()
+    df["macd_histogram"] = df["macd"] - df["macd_signal"]
+    
+    return df
+
+
+def add_roc(df: pd.DataFrame, period: int = 10) -> pd.DataFrame:
+    """Add Rate of Change (ROC) momentum indicator."""
+    df["roc"] = ((df["Close"] - df["Close"].shift(period)) / df["Close"].shift(period) * 100).fillna(0)
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  Master: compute all features at once
+# ═══════════════════════════════════════════════════════════════
+
+def compute_all_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply all indicator computations to a DataFrame, including new world-class features."""
+    # Original features
+    add_emas(df)
+    add_rsi(df)
+    add_atr(df)
+    add_adx(df)
+    add_bollinger(df)
+    add_breakout_proximity(df)
+    add_volatility_percentile(df)
+    add_pullback_depth(df)
+    add_rsi_divergence(df)
+    df["ema_50_slope"] = ema_slope(df[f"ema_{EMA_MID}"])
+    df["rejection"] = is_rejection_candle(df)
+    df["reversal"] = is_reversal_candle(df)
+    
+    # New world-class features
+    detect_market_structure(df, lookback=10)
+    add_vwap(df)
+    add_stochastic(df, k_period=14, d_period=3)
+    add_macd(df, fast=12, slow=26, signal=9)
+    add_roc(df, period=10)
+    
+    return df

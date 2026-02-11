@@ -1,0 +1,27 @@
+{
+  "config": {
+    "pair": "XAUUSD",
+    "start_date": "2026-02-06",
+    "end_date": "2026-02-11",
+    "initial_capital": 100.0,
+    "commission_pct": 0.0,
+    "slippage_pips": 0.0
+  },
+  "metrics": {
+    "total_trades": 0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown_pct": 0.0,
+    "total_return_pct": 0.0,
+    "expectancy": 0.0,
+    "avg_rr": 0.0
+  },
+  "trades": [],
+  "equity_curve": [
+    100.0
+  ],
+  "timestamps": [],
+  "regime_stats": null,
+  "session_stats": null
+}
