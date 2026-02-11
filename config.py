@@ -18,10 +18,10 @@ PKT_UTC_OFFSET = 5            # Pakistan Standard Time = UTC+5
 # ─────────────────────────── Sessions (PKT hours, 24h) ────────
 # Primary: 5 PM – 9 PM PKT  (London–NY overlap)
 # Secondary: 12 PM – 5 PM PKT (London session only)
-SESSION_OVERLAP_START = 17    # 5 PM PKT
-SESSION_OVERLAP_END   = 21    # 9 PM PKT
-SESSION_LONDON_START  = 12    # 12 PM PKT
-SESSION_LONDON_END    = 17    # 5 PM PKT
+SESSION_OVERLAP_START = 0    # 12 AM PKT (Testing: allow all day)
+SESSION_OVERLAP_END   = 24    # 12 AM PKT
+SESSION_LONDON_START  = 0     # 12 AM PKT
+SESSION_LONDON_END    = 24    # 12 AM PKT
 
 SESSION_SCORE_OVERLAP = 5
 SESSION_SCORE_LONDON  = 3
@@ -43,11 +43,11 @@ class PairConfig:
 PAIRS: Dict[str, PairConfig] = {
     "XAUUSD": PairConfig(
         symbol="GC=F",
-        display_name="XAU/USD",
-        pip_value=0.1,
-        pip_size=0.01,
-        contract_size=100,     # 1 lot = 100 oz
-        risk_pct=0.75,
+        display_name="Gold/USD",
+        pip_value=10.0,    # Futures: $10 per point (0.1 move = $1)
+        pip_size=0.1,      # Tick size
+        contract_size=100, # 1 contract
+        risk_pct=1.0,
         atr_stop_multiplier=1.5,
     ),
     "XAGUSD": PairConfig(
@@ -100,9 +100,9 @@ TIMEFRAME_1H    = "1h"
 TIMEFRAME_15M   = "15m"
 
 # Data fetch periods for each timeframe
-FETCH_PERIOD_DAILY = "120d"   # ~6 months for 200 EMA
-FETCH_PERIOD_1H    = "30d"    # yfinance limit for hourly
-FETCH_PERIOD_15M   = "7d"     # yfinance limit for 15m
+FETCH_PERIOD_DAILY = "5y"     # 5 years to ensure >200 EMA is valid
+FETCH_PERIOD_1H    = "730d"   # ~2 years (yfinance limit for hourly)
+FETCH_PERIOD_15M   = "60d"    # ~2 months (yfinance limit for 15m)
 
 # ═══════════════════════════════════════════════════════════════
 #  NEW: World-Class Feature Parameters

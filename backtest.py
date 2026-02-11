@@ -159,7 +159,9 @@ class Backtester:
             # Analyze current setup
             try:
                 regime = detect_regime(data_slice["1h"])
-                session = get_session_info(current_time)
+                # if i % 50 == 0:
+                #      print(f"Candle {current_time} | Regime: {regime.regime.name}")
+                session = classify_candle_session(current_time)
                 
                 scores = compute_total_score(
                     df_daily=data_slice["daily"],
@@ -180,6 +182,10 @@ class Backtester:
                 
                 # Check if trade is eligible
                 if not eligibility.is_eligible:
+                    # Debug: print why it failed occasionally
+                    # Log more frequently for debugging
+                    if i % 50 == 0:
+                        print(f"Candle {current_time} | Score: L={eligibility.long_score:.1f} S={eligibility.short_score:.1f} | {eligibility.summary}")
                     continue
                 
                 # Simulate trade
