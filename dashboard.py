@@ -59,6 +59,7 @@ def render_dashboard(
     position: Optional[PositionSize],
     risk_mgr: RiskManager,
     candle_time: str = "",
+    pivots: Optional[dict] = None,
 ) -> str:
     """
     Render a full dashboard string for one pair at one candle close.
@@ -132,6 +133,16 @@ def render_dashboard(
     lines.append(f"  Risk Quality:     {rq_score:.1f} / 10")
 
     lines.append(f"  {thin}")
+
+    # ── Pivot Points ──
+    if pivots:
+        lines.append(f"  {Fore.WHITE}PIVOT POINTS:{Style.RESET_ALL}")
+        lines.append(f"  R2: {pivots.get('R2', 0):.5f}")
+        lines.append(f"  R1: {pivots.get('R1', 0):.5f}")
+        lines.append(f"  P:  {pivots.get('P', 0):.5f}")
+        lines.append(f"  S1: {pivots.get('S1', 0):.5f}")
+        lines.append(f"  S2: {pivots.get('S2', 0):.5f}")
+        lines.append(f"  {thin}")
 
     # ── Position Sizing & Stops ──
     if position and stop_target:

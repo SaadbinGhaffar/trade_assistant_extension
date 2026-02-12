@@ -135,9 +135,28 @@ def score_daily_bias(df_daily: pd.DataFrame) -> ModuleScore:
         short_pts += 3
     details["breakout_proximity"] = f"{bp:.3f}"
 
+    # 5) Market Structure (5 pts) - NEW
+    structure = row.get("market_structure", "neutral")
+    structure_break = row.get("structure_break", 0)
+    
+    if structure == "bullish":
+        long_pts += 5
+        short_pts += 1
+        if structure_break == 1:
+            long_pts += 2  # Bonus for fresh break
+    elif structure == "bearish":
+        short_pts += 5
+        long_pts += 1
+        if structure_break == 1:
+            short_pts += 2
+    else:
+        long_pts += 2.5
+        short_pts += 2.5
+    details["market_structure"] = f"{structure} (break={structure_break})"
+
     # Clamp to max
-    long_pts = min(long_pts, MAX)
-    short_pts = min(short_pts, MAX)
+    long_pts = min(long_pts, MAX + 5)  # Increased max to 30
+    short_pts = min(short_pts, MAX + 5)
 
     # Add Label
     details["label"] = "Bullish" if long_pts > short_pts else "Bearish"
@@ -383,7 +402,47 @@ def score_entry_quality(
             short_pts += 2
         details["reversal_candle"] = f"{rev:+.0f}"
 
-    else:  # VOLATILE → reduce both scores
+    # ── Universal Entry Enhancements (apply to all regimes) ──
+    
+    # e) VWAP Position (3 pts) - NEW
+    vwap_pos = row.get("vwap_position", 0)
+    if vwap_pos > 0.3:  # Above VWAP = bullish
+        long_pts += min(3, vwap_pos * 3)
+        short_pts += max(0, 3 - vwap_pos * 3)
+    elif vwap_pos < -0.3:  # Below VWAP = bearish
+        short_pts += min(3, abs(vwap_pos) * 3)
+        long_pts += max(0, 3 - abs(vwap_pos) * 3)
+    else:
+        long_pts += 1.5
+        short_pts += 1.5
+    details["vwap_position"] = f"{vwap_pos:+.2f}"
+    
+    # f) Momentum Confirmation (3 pts) - NEW
+    stoch_k = row.get("stoch_k", 50)
+    macd_hist = row.get("macd_histogram", 0)
+    
+    # Stochastic oversold/overbought
+    if stoch_k < 30:
+        long_pts += 1.5
+    elif stoch_k > 70:
+        short_pts += 1.5
+    else:
+        long_pts += 0.5
+        short_pts += 0.5
+    
+    # MACD histogram direction
+    if macd_hist > 0:
+        long_pts += 1.5
+    elif macd_hist < 0:
+        short_pts += 1.5
+    else:
+        long_pts += 0.5
+        short_pts += 0.5
+    
+    details["momentum"] = f"Stoch={stoch_k:.1f}, MACD_H={macd_hist:.4f}"
+
+    if regime.regime == Regime.VOLATILE:
+        # Volatile regime → reduce both scores
         long_pts = MAX * 0.2
         short_pts = MAX * 0.2
         details["note"] = "Volatile regime – entry quality capped"
@@ -453,7 +512,14 @@ def score_volatility_session(
     score += spread_pts
     details["spread_quality"] = f"HL/ATR={hl_range/atr:.2f}" if atr > 0 else "N/A"
 
-    score = min(score, MAX)
+    # 4) Time-of-Day Pattern (2 pts) - NEW
+    # This would require current hour from session, placeholder for now
+    # In production, check if current hour in OPTIMAL_HOURS for the pair
+    time_bonus = 0.0  # Placeholder - implement in main.py with actual time
+    score += time_bonus
+    details["time_pattern"] = "N/A (implement in main)"
+
+    score = min(score, MAX + 2)  # Increased max to 17
 
     return ModuleScore(
         long_score=round(score, 1),

@@ -60,6 +60,42 @@ class RiskManager:
         self.state = RiskState()
         self._trade_log: List[dict] = []
 
+    # ─────────────────────── NEW: Adaptive Risk Features ─────────────────────
+
+    def get_adaptive_atr_multiplier(self, vol_percentile: float) -> float:
+        """
+        Return ATR multiplier based on current volatility percentile.
+        
+        Low volatility: tighter stops (1.2x)
+        Normal volatility: standard stops (1.5x)
+        High volatility: wider stops (2.0x)
+        """
+        from config import ATR_MULTIPLIERS
+        
+        if vol_percentile < 30:
+            return ATR_MULTIPLIERS["low"]
+        elif vol_percentile > 70:
+            return ATR_MULTIPLIERS["high"]
+        else:
+            return ATR_MULTIPLIERS["normal"]
+
+    def get_position_scale_factor(self, score: float) -> float:
+        """
+        Return position size multiplier based on setup score.
+        
+        Score 65-75: 50% position
+        Score 75-85: 75% position
+        Score 85+: 100% position
+        """
+        from config import POSITION_SCALE
+        
+        for (min_score, max_score), scale in POSITION_SCALE.items():
+            if min_score <= score < max_score:
+                return scale
+        
+        # Default to 50% if score below threshold
+        return 0.5
+
     # ─────────────────────── Stop & Target ─────────────────────
 
     def compute_stop_target(
@@ -69,6 +105,7 @@ class RiskManager:
         pair_cfg: PairConfig,
         direction: str = "long",
         rr_ratio: float = 1.5,
+        vol_percentile: float = 50.0,  # NEW parameter
     ) -> StopTarget:
         """
         Compute ATR-adjusted stop and target prices.

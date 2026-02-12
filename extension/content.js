@@ -136,13 +136,24 @@ async function fetchData() {
     btn.innerHTML = '<span class="fx-spinner"></span> Analyzing...';
 
     // 1. Get Pair from Page Title or URL
-    // TV format: "XAUUSD Chart - ..." or URL /chart/?symbol=...
-    let pair = "XAUUSD"; // Default
-    const title = document.title;
-    if (title.includes("Gold")) pair = "XAUUSD";
-    else if (title.includes("Silver")) pair = "XAGUSD";
-    else if (title.includes("EURUSD")) pair = "EURUSD";
-    // Check internal TV symbol if accessible (often obfuscated), relying on Title for now.
+    // Better logic: Check if title contains known symbols
+    let pair = "XAUUSD"; // Fallback
+    const title = document.title.toUpperCase();
+
+    // Priority check for supported pairs
+    if (title.includes("EURUSD") || title.includes("EUR/USD")) pair = "EURUSD";
+    else if (title.includes("XAGUSD") || title.includes("SILVER") || title.includes("XAG")) pair = "XAGUSD";
+    else if (title.includes("GBPUSD") || title.includes("GBP/USD")) pair = "GBPUSD"; // Added support if config matches
+    else if (title.includes("XAUUSD") || title.includes("GOLD") || title.includes("XAU")) pair = "XAUUSD";
+
+    // Attempt to grab from URL if title failed (sometimes title is just "TradingView")
+    const urlParams = new URLSearchParams(window.location.search);
+    const symbolParam = urlParams.get('symbol');
+    if (symbolParam) {
+        if (symbolParam.includes("EURUSD")) pair = "EURUSD";
+        if (symbolParam.includes("XAG")) pair = "XAGUSD";
+        if (symbolParam.includes("XAU") || symbolParam.includes("GOLD")) pair = "XAUUSD";
+    }
 
     try {
         const response = await fetch(`http://localhost:5000/analyze?pair=${pair}`);

@@ -75,6 +75,17 @@ def analyze_pair(
     # ── Step 2: Detect regime from 1H ──
     regime = detect_regime(data["1h"])
 
+    # ── Step 2b: Detect Liquidity Zones (NEW) ──
+    from features import detect_liquidity_zones
+    from config import LIQUIDITY_ZONE_LOOKBACK, LIQUIDITY_ZONE_COUNT, LIQUIDITY_ZONE_TOLERANCE
+    
+    liquidity_zones = detect_liquidity_zones(
+        data["daily"],
+        lookback=LIQUIDITY_ZONE_LOOKBACK,
+        num_zones=LIQUIDITY_ZONE_COUNT,
+        tolerance_pct=LIQUIDITY_ZONE_TOLERANCE,
+    )
+
     # ── Step 3: Compute dual-sided scores ──
     scores = compute_total_score(
         df_daily=data["daily"],
@@ -137,6 +148,7 @@ def analyze_pair(
         "stop_target": stop_target,
         "position": position,
         "candle_time": candle_time,
+        "liquidity_zones": liquidity_zones,  # NEW
     }
 
 

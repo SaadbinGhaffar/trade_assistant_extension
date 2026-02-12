@@ -18,10 +18,10 @@ PKT_UTC_OFFSET = 5            # Pakistan Standard Time = UTC+5
 # ─────────────────────────── Sessions (PKT hours, 24h) ────────
 # Primary: 5 PM – 9 PM PKT  (London–NY overlap)
 # Secondary: 12 PM – 5 PM PKT (London session only)
-SESSION_OVERLAP_START = 17    # 5 PM PKT
-SESSION_OVERLAP_END   = 21    # 9 PM PKT
-SESSION_LONDON_START  = 12    # 12 PM PKT
-SESSION_LONDON_END    = 17    # 5 PM PKT
+SESSION_OVERLAP_START = 0    # 12 AM PKT (Testing: allow all day)
+SESSION_OVERLAP_END   = 24    # 12 AM PKT
+SESSION_LONDON_START  = 0     # 12 AM PKT
+SESSION_LONDON_END    = 24    # 12 AM PKT
 
 SESSION_SCORE_OVERLAP = 5
 SESSION_SCORE_LONDON  = 3
@@ -43,11 +43,11 @@ class PairConfig:
 PAIRS: Dict[str, PairConfig] = {
     "XAUUSD": PairConfig(
         symbol="GC=F",
-        display_name="XAU/USD",
-        pip_value=0.1,
-        pip_size=0.01,
-        contract_size=100,     # 1 lot = 100 oz
-        risk_pct=0.75,
+        display_name="Gold/USD",
+        pip_value=10.0,    # Futures: $10 per point (0.1 move = $1)
+        pip_size=0.1,      # Tick size
+        contract_size=100, # 1 contract
+        risk_pct=1.0,
         atr_stop_multiplier=1.5,
     ),
     "XAGUSD": PairConfig(
@@ -65,6 +65,15 @@ PAIRS: Dict[str, PairConfig] = {
         pip_value=0.0001,
         pip_size=0.0001,
         contract_size=100_000, # 1 standard lot
+        risk_pct=1.0,
+        atr_stop_multiplier=1.5,
+    ),
+    "GBPUSD": PairConfig(
+        symbol="GBPUSD=X",
+        display_name="GBP/USD",
+        pip_value=0.0001,
+        pip_size=0.0001,
+        contract_size=100_000,
         risk_pct=1.0,
         atr_stop_multiplier=1.5,
     ),
@@ -100,6 +109,54 @@ TIMEFRAME_1H    = "1h"
 TIMEFRAME_15M   = "15m"
 
 # Data fetch periods for each timeframe
-FETCH_PERIOD_DAILY = "120d"   # ~6 months for 200 EMA
-FETCH_PERIOD_1H    = "30d"    # yfinance limit for hourly
-FETCH_PERIOD_15M   = "7d"     # yfinance limit for 15m
+FETCH_PERIOD_DAILY = "5y"     # 5 years to ensure >200 EMA is valid
+FETCH_PERIOD_1H    = "730d"   # ~2 years (yfinance limit for hourly)
+FETCH_PERIOD_15M   = "60d"    # ~2 months (yfinance limit for 15m)
+
+# ═══════════════════════════════════════════════════════════════
+#  NEW: World-Class Feature Parameters
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────── Pair Correlations ────────────────────
+# Correlation matrix for risk management (avoid overexposure)
+PAIR_CORRELATIONS = {
+    ("XAUUSD", "XAGUSD"): 0.85,  # Gold and Silver highly correlated
+    ("EURUSD", "GBPUSD"): 0.75,  # EUR and GBP moderately correlated
+    ("EURUSD", "USDCHF"): -0.80, # EUR/USD and USD/CHF inversely correlated
+}
+CORRELATION_THRESHOLD = 0.7  # Block if correlation > 0.7
+
+# ─────────────────────────── Time-of-Day Patterns ──────────────────
+# Optimal trading hours per pair (PKT timezone)
+OPTIMAL_HOURS = {
+    "XAUUSD": [(18, 21)],  # 6-9 PM PKT (NY open)
+    "EURUSD": [(12, 15)],  # 12-3 PM PKT (London open)
+    "GBPUSD": [(12, 15)],  # 12-3 PM PKT (London open)
+    "XAGUSD": [(18, 21)],  # 6-9 PM PKT (NY open)
+}
+
+# ─────────────────────────── Adaptive ATR Multipliers ──────────────
+# Volatility-based stop sizing
+ATR_MULTIPLIERS = {
+    "low": 1.2,      # vol_percentile < 30
+    "normal": 1.5,   # vol_percentile 30-70
+    "high": 2.0,     # vol_percentile > 70
+}
+
+# ─────────────────────────── Liquidity Zones ───────────────────────
+LIQUIDITY_ZONE_LOOKBACK = 50
+LIQUIDITY_ZONE_COUNT = 3
+LIQUIDITY_ZONE_TOLERANCE = 0.3  # % tolerance for clustering
+
+# ─────────────────────────── Position Scaling ──────────────────────
+# Score-based position sizing
+POSITION_SCALE = {
+    (65, 75): 0.5,   # 50% position
+    (75, 85): 0.75,  # 75% position
+    (85, 100): 1.0,  # 100% position
+}
+
+# ─────────────────────────── News Event Filter ─────────────────────
+NEWS_BLOCK_MINUTES_BEFORE = 30
+NEWS_BLOCK_MINUTES_AFTER = 30
+NEWS_IMPACT_LEVELS = ["high"]  # Block only high-impact news
