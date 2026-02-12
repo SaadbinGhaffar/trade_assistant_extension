@@ -68,6 +68,15 @@ PAIRS: Dict[str, PairConfig] = {
         risk_pct=1.0,
         atr_stop_multiplier=1.5,
     ),
+    "GBPUSD": PairConfig(
+        symbol="GBPUSD=X",
+        display_name="GBP/USD",
+        pip_value=0.0001,
+        pip_size=0.0001,
+        contract_size=100_000,
+        risk_pct=1.0,
+        atr_stop_multiplier=1.5,
+    ),
 }
 
 # ─────────────────────────── Scoring Weights ───────────────────
